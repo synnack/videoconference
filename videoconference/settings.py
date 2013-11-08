@@ -124,7 +124,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'videoconference',
     'scheduler',
-
+    'presider',
 
     'south', # Has to be the very last one
 )

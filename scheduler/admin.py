@@ -1,5 +1,5 @@
 from django.contrib import admin
-from scheduler.models import MCU, MeetingRoom
+from scheduler.models import MCU, Reservation
 
 admin.site.register(MCU)
-admin.site.register(MeetingRoom)
+admin.site.register(Reservation)

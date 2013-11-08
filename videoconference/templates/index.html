@@ -1,5 +1,9 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+
+{% block title %}
+	{{ block.super }}
+	Home
+{% endblock %}
 {% block content %}
 	{{ block.super }}
 	Welcome to the NIKHEF conference system, choose your action in the top menu.

@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,6 +7,34 @@
 	<link rel="stylesheet" href="{% static "includes/style.css" %}" type="text/css" /> 
 	<link rel="shortcut icon" href="{% static "images/favicon.ico" %}" />
 	<link rel="icon" href="{% static "images/favicon.ico" %}" />
+<link rel="stylesheet" type="text/css" 
+    href="{% static 'admin/css/forms.css' %} "/>
+<link rel="stylesheet" type="text/css" 
+    href="{% static 'admin/css/base.css' %} "/>
+<link rel="stylesheet" type="text/css" 
+    href="{% static 'admin/css/global.css' %}"/>
+<link rel="stylesheet" type="text/css" 
+    href="{% static 'admin/css/widgets.css' %}"/>
+
+<script type="text/javascript">
+window.__admin_media_prefix__ = '{% static 'admin/' %}';
+</script>
+<script type="text/javascript" 
+    src="/admin/jsi18n/"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/core.js' %}"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/jquery.js' %}"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/actions.js' %}"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/calendar.js' %}"></script>
+<script type="text/javascript" 
+    src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
 </head>
 
 <body>
@@ -14,20 +42,21 @@
 		<div id="menuLeft">
 			<ul>
 				<li><a href="{% url 'index' %}">Home</a></li>
-				<li><a href="{% url 'scheduler:request' %}">Request conference</a></li>
-				<li><a href="{% url 'scheduler:rooms' %}">My rooms</a></li>
+				<li><a href="{% url 'scheduler:reservation' '' %}">Request conference</a></li>
+				<li><a href="{% url 'scheduler:reservations' %}">My reservations</a></li>
+				<li><a href="{% url 'presider:index' %}">Active conferences</a></li>
 				<li><a href="{% url 'admin:index' %}">Admin</a></li>			
 			</ul>
 		</div>
 		<div id="menuRight">
 			<ul>
-				<li><a href="admin/logout">Log out ({{ user.username }})</a></li>				
+				<li><a href="{% url 'admin:logout' %}">Log out ({{ user.username }})</a></li>				
 			</ul>
 		</div>
 	</div>
 	<div id="wrapper">
-		<div id="header">
-			<h1>{{ title }}</h1>
+		<div id="title">
+			<h1>{% block title %}{% endblock %}</h1>
 			<img src="{% static "images/nikhef.png" %}" id="logo" alt="Nikhef Logo" />
 		</div>
 		<hr />

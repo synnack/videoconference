@@ -22,6 +22,8 @@ body{
 }
 #menu li{
 	float: left;
+	list-style-image: none;
+	list-style-type: none;
 }
 #menu li a{
 	padding-left: 5px;
@@ -54,26 +56,44 @@ hr{
 }
 table.reservations{
 	border-collapse: collapse;
+	width: 100%;
 }
-table.reservations tr{
-	border-bottom: 1px #999 dotted;
-}
-table.reservations #reservationsHeader{
+table.reservations thead tr {
+	background-color: #ccc;
 	border: 0px;
 }
-table.reservations td{
+table.reservations thead th{
+	padding: 6px;
+	background: none;
+	color: black;
+	border: 0px;
+}
+table.reservations tbody tr {
+	border-bottom: 1px #999 dotted;
+	cursor: pointer;
+}
+table.reservations tbody tr:hover {
+	background-color: #ff7777;
+}
+table.reservations td {
 	padding: 6px;
 }
+table.reservations .odd {
+	background-color: #ffffff;
+}
+table.reservations .even {
+	background-color: #f1f1f1;
+}
 
-#header{
+#title{
 	height: 45px;
 }
-	#header #logo{
+	#title #logo{
 		width: 100px;
 		vertical-align:middle;
 		float: right;
 	}
-	#header h1{
+	#title h1{
 		font-size: 20px;
 		display: inline;
 		float: left;

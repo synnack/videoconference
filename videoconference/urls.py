@@ -6,9 +6,10 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^$', 'scheduler.views.index', name='index'),
+    url(r'^$', 'videoconference.views.index', name='index'),
     url(r'^scheduler/', include('scheduler.urls', namespace='scheduler')),
+    url(r'^presider/', include('presider.urls', namespace='presider')),
 
-    # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
 )
