@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}
+	{{ block.super }}
+	Ongoing conferences
+{% endblock %}
+{% block content %}
+	{{ block.super }}
+
+<table class="conferences">
+<thead>
+<tr>
+<th>Room</th>
+<th>Begin</th>
+<th>End</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+{% for conference in conferences %}
+	<tr class="{% cycle 'odd' 'even' %}" onclick="window.location.href='{% url 'presider:conference' conference.id %}';">
+	<td>{{ conference.name }}</td>
+	<td>{{ conference.begin_time|date:"Y-m-d H:i:s" }}</td>
+	<td>{{ conference.end_time|date:"Y-m-d H:i:s" }}</td>
+	<td>{{ conference.description }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

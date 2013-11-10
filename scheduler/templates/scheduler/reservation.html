@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}
+	{{ block.super }}
+	Conference reservation
+{% endblock %}
+{% block content %}
+	{{ block.super }}
+<form method="post" action="" name="requestConference">
+{% csrf_token %}
+<table>
+{{ form }}
+<tr>
+<td colspan="2" align="center"><input type="submit" value="Update reservation"> &nbsp; <input type="submit" name="cancel" value="Delete reservation"></td>
+</tr>
+</table>
+</form>	
+{% endblock %}

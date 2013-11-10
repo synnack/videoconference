@@ -4,20 +4,25 @@ from scheduler.models import Reservation, MCU
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.forms import ValidationError
-
+from datetime import datetime, timedelta
 
 @login_required
-def reservations(request):
+def list_reservations(request):
     """
     Presents a list of reservations for this user ordered by date.
     """
+    now = datetime.now() + timedelta(minutes=15)
+    future_reservations = Reservation.objects.filter(user=request.user).filter(begin_time__gt=now).order_by('-begin_time')
+    historical_reservations = Reservation.objects.filter(user=request.user).filter(begin_time__lte=now).order_by('-begin_time')
 
-    reservations = Reservation.objects.filter(user=request.user).order_by('-begin_time')
-    context = { 'reservations': reservations }
+    context = { 
+        'future_reservations': future_reservations,
+        'historical_reservations': historical_reservations,
+    }
     return render(request, 'scheduler/reservations.html', context)
 
 @login_required
-def reservation(request, id):
+def edit_reservation(request, id):
     """
     Modify, cancel or create a reservation
     

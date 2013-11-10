@@ -1,0 +1,118 @@
+body{
+	margin: 0;
+	font-family: arial,sans-serif;
+	font-size: 12px;
+}
+#menu{
+	background-color: #2D2D2D;
+	height: 29px;
+	color: #ccc;
+	width: 100%;
+}
+#menuLeft{
+	float: left;
+}
+#menuRight{
+	float: right;
+}
+#menu ul{
+	list-style: none;
+	margin: 0px;
+	padding: 0px;
+}
+#menu li{
+	float: left;
+	list-style-image: none;
+	list-style-type: none;
+}
+#menu li a{
+	padding-left: 5px;
+	padding-right: 5px;
+	text-decoration: none;
+	color: #ccc;
+	text-align: center;
+	line-height: 29px;
+	float: left;
+	display: block;
+	#border: 0.1em solid #dcdce9;
+}
+#menu li a:hover{
+	background-color: #4c4c4c;
+}
+#wrapper{
+	margin: 0 auto;
+	margin-top: 10px;
+	width: 750px;
+	min-height: 300px;
+	#border: 1px #000 dotted;
+}
+#content{
+
+}
+
+hr{
+	margin: 10px 0px 10px 0px;
+	border: 1px dotted #999; border-style: none none dotted;	
+}
+table.conferences,
+table.inactive_conferences {
+	border-collapse: collapse;
+	width: 100%;
+}
+table.conferences thead tr,
+table.inactive_conferences thead tr {
+	background-color: #ccc;
+	border: 0px;
+}
+table.conferences thead th,
+table.inactive_conferences thead th {
+	padding: 6px;
+	background: none;
+	color: black;
+	border: 0px;
+}
+table.conferences tbody tr, 
+table.inactive_conferences tbody tr {
+	border-bottom: 1px #999 dotted;
+}
+table.conferences td,
+table.inactive_conferences td {
+	padding: 6px;
+}
+table.conferences .odd,
+table.inactive_conferences .odd {
+	background-color: #ffffff;
+}
+table.conferences .even,
+table.inactive_conferences .even {
+	background-color: #f1f1f1;
+}
+table.conferences tbody tr {
+	cursor: pointer;
+}
+table.conferences tbody tr:hover {
+	background-color: #ff7777;
+}
+table.inactive_conferences td {
+	color: gray;
+}
+
+#title{
+	height: 45px;
+}
+#title #logo{
+	width: 100px;
+	vertical-align:middle;
+	float: right;
+}
+#title h1{
+	font-size: 20px;
+	display: inline;
+	float: left;
+	position: relative;
+	margin-top: 11px;
+}
+
+.pointer{
+	cursor: pointer;
+}

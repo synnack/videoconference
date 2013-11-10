@@ -13,7 +13,13 @@ class MCU(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class Reservation(models.Model):
+    STATUS_OPTIONS = (
+        ("planned", "Planned"),
+        ("inprogress", "In progress"),
+        ("done", "Done")
+    )
     mcu = models.ForeignKey(MCU)
     user = models.ForeignKey(User)
     name = models.CharField(max_length=50)
@@ -21,6 +27,7 @@ class Reservation(models.Model):
     begin_time = models.DateTimeField()
     end_time = models.DateTimeField()
     participant_count = models.IntegerField(null=False)
+    status = models.CharField(max_length=25, choices=STATUS_OPTIONS, default="planned") # This is really one choice with multiple options. Dafuq?
 
     def __str__(self):
         return self.name

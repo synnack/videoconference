@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}
+	{{ block.super }}
+	My reservations
+{% endblock %}
+{% block content %}
+	{{ block.super }}
+
+<h2>Future reservations</h2>
+<table class="conferences">
+<thead>
+<tr>
+<th>Room</th>
+<th>Begin</th>
+<th>End</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+{% for reservation in future_reservations %}
+	<tr class="{% cycle 'odd' 'even' %}" onclick="window.location.href='{% url 'scheduler:reservation' reservation.id %}';">
+	<td>{{ reservation.name }}</td>
+	<td>{{ reservation.begin_time|date:"Y-m-d H:i:s" }}</td>
+	<td>{{ reservation.end_time|date:"Y-m-d H:i:s" }}</td>
+	<td>{{ reservation.description }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+<h2>History</h2>
+<table class="inactive_conferences">
+<thead>
+<tr>
+<th>Room</th>
+<th>Begin</th>
+<th>End</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+{% for reservation in historical_reservations %}
+	<tr class="{% cycle 'odd' 'even' %}">
+	<td>{{ reservation.name }}</td>
+	<td>{{ reservation.begin_time|date:"Y-m-d H:i:s" }}</td>
+	<td>{{ reservation.end_time|date:"Y-m-d H:i:s" }}</td>
+	<td>{{ reservation.description }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
