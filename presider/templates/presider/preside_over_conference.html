@@ -12,7 +12,7 @@
 $(document).ready(function () {
 	$.ajax({
 		url: "{% url "presider:ajax" id %}",
-		dataType: "json", 
+		dataType: "json",
 	}).done(function(data) {
 		/* FIXME: I need to parse this thing to build the div box */
 		alert(data['conf'][0][1]);

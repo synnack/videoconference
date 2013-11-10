@@ -15,7 +15,7 @@ def list_reservations(request):
     future_reservations = Reservation.objects.filter(user=request.user).filter(begin_time__gt=now).order_by('-begin_time')
     historical_reservations = Reservation.objects.filter(user=request.user).filter(begin_time__lte=now).order_by('-begin_time')
 
-    context = { 
+    context = {
         'future_reservations': future_reservations,
         'historical_reservations': historical_reservations,
     }
@@ -25,7 +25,7 @@ def list_reservations(request):
 def edit_reservation(request, id):
     """
     Modify, cancel or create a reservation
-    
+
     GET presents a form, POST updates the database
     If id is absent: create a new reservation
     If id is provided and also POST['cancel'], cancel a reservation

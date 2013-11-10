@@ -52,7 +52,7 @@ body{
 
 hr{
 	margin: 10px 0px 10px 0px;
-	border: 1px dotted #999; border-style: none none dotted;	
+	border: 1px dotted #999; border-style: none none dotted;
 }
 table.conferences,
 table.inactive_conferences {

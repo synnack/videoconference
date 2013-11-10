@@ -12,5 +12,5 @@ class ReservationForm(ModelForm):
         fields = ['name', 'begin_time', 'end_time', 'participant_count', 'description']
     def __init__(self, *args, **kwargs):
         super(ReservationForm, self).__init__(*args, **kwargs)
-        self.fields['end_time'].widget = widgets.AdminSplitDateTime() 
-        self.fields['begin_time'].widget = widgets.AdminSplitDateTime() 
+        self.fields['end_time'].widget = widgets.AdminSplitDateTime()
+        self.fields['begin_time'].widget = widgets.AdminSplitDateTime()
