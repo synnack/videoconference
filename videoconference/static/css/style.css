@@ -42,7 +42,7 @@ body{
 #wrapper{
 	margin: 0 auto;
 	margin-top: 10px;
-	width: 750px;
+	min-width: 750px;
 	min-height: 300px;
 	#border: 1px #000 dotted;
 }

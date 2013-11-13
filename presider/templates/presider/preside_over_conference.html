@@ -6,18 +6,190 @@
 {% endblock %}
 {% block content %}
 	{{ block.super }}
+<script type="text/javascript"
+    src="{% static 'js/jquery-1.10.2.min.js' %}"></script>
+<script type="text/javascript"
+	src="{% static 'js/jquery.event.drag-2.2.js' %}"></script>
+<script type="text/javascript"
+	src="{% static 'js/jquery.event.drop-2.2.js' %}"></script>
+<script type="text/javascript"
+	src="{% static 'js/jquery.cookie.js' %}"></script>
+<style type="text/css">
+.tile{
+	min-width: 400px;
+	margin-bottom: 30px;
+	margin-right: 50px;
+	float: left;
+}
+.participants li {
+	list-style: none;
+}
+</style>
+<div class="tile">
+	<h2>Conference layout</h2>
+	<div id="controls" style="position:relative;width:400px;height:32px;background-color: #333;color:white;text-align: center;vertical-align:middle;">
+		<br/><b>Insert controls here</b>
+	</div>
+	<div id="video" style="position:relative;width:400px; height:225px;">
+		<video autoplay style="width:400px;height:225px;background-color: black"></video>
+	</div>
+</div>
+<div class="tile">
+	<h2>Participants</h2>
+	<div id="participants" style="min-height: 250px">
+		<ul id="particpant-list">
+			<li>Henk</li><!-- FIXME -->
+			<li>Kees</li>
+			<li>Karel</li>
+			<li>Jan</li>
+			<li>Gerrit</li>
+			<li>Dirk</li>
+			<li>Niko</li>
+			<li>Arie</li>
+			<li>Hans</li>
+			<li>Herman</li>
+		</ul>
+	</div>
+</div>
+<div class="tile">
+	<h2>Conference log</h2>
+	<div id="log" style="max-width: 500px">
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Typi non habent claritatem insitam; est usus legentis in iis qui facit eorum claritatem. Investigationes demonstraverunt lectores legere me lius quod ii legunt saepius. Claritas est etiam processus dynamicus, qui sequitur mutationem consuetudium lectorum. Mirum est notare quam littera gothica, quam nunc putamus parum claram, anteposuerit litterarum formas humanitatis per seacula quarta decima et quinta decima. Eodem modo typi, qui nunc nobis videntur parum clari, fiant sollemnes in futurum.
 
-<script type="text/javascript" src="{% static "js/jquery-1.10.2.min.js" %}"></script>
+	
+	</div>
+</div>
 <script type="text/javascript">
-$(document).ready(function () {
-	$.ajax({
-		url: "{% url "presider:ajax" id %}",
-		dataType: "json",
-	}).done(function(data) {
-		/* FIXME: I need to parse this thing to build the div box */
-		alert(data['conf'][0][1]);
-	});
+window.URL = window.URL || window.webkitURL;
+navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+
+// Set up cross-site request forgery protection for calls to the backend
+var csrftoken = $.cookie('csrftoken');
+function csrfSafeMethod(method) {
+	// these HTTP methods do not require CSRF protection
+	return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+	crossDomain: false,
+	beforeSend: function(xhr, settings) {
+		if (!csrfSafeMethod(settings.type)) {
+			xhr.setRequestHeader("X-CSRFToken", csrftoken);
+		}
+	}
 });
+
+
+function draw_frames(data) {
+	var frame_height = data['frame_height'];
+	var frame_width = data['frame_width'];
+	var box_width = 400;
+	var box_height = 225;
+	if (data['status'] != "ok") {
+		console.log("Bailing out. An error occured: " +  data['text']);
+		return;
+	}
+
+	for (i in data['mixers'][0]['frames']) {
+		var frame = data['mixers'][0]['frames'][i];
+		var div = $(document.createElement("div"))
+			.attr({ 'draggable': true, 'id': i })
+			.css({
+				'position': 'absolute',
+				'left':   Math.floor(frame['pos_x']  / frame_width  * box_width),
+				'top':    Math.floor(frame['pos_y']  / frame_height * box_height),
+				'width':  Math.floor(frame['width']  / frame_width  * box_width),
+				'height': Math.floor(frame['height'] / frame_height * box_height),
+			});
+
+		// This makes sure the drag position follows the mouse cursor and not the top left corner
+		// of the dragged frame
+		$.drop({'mode': 'mouse'});
+
+		div
+			.bind('dragstart', function(event, callback) {
+				return $(this).clone()
+					.css({
+						'opacity': .5, 
+						'background-color': 'green'})
+					.appendTo('body');
+			})
+			.bind('drag', function(event, callback) {
+				$(callback.proxy).css({
+					'top':  callback.offsetY,
+					'left': callback.offsetX
+				});
+			})
+			.bind('dragend', function(event, callback) {
+				$(callback.proxy).remove();
+
+				// If there is no drop target, the frame has been dragged away from the box
+				if (callback.drop.length == 0) {
+					post = {
+						'action': 'REMOVE_PARTICIPANT',
+						'position': callback.drag.id,
+					};
+					$.post("{% url "presider:ajax" id %}", post, function(data) {
+						if (data['status'] == "ok") {
+							console.log("REMOVE_PARTICIPANT: OK");
+						} else {
+							alert("REMOVE_PARTICIPANT: " + data['text']);
+						}
+					}, 'json');
+				} else {
+					post = {
+						'action': 'MOVE_PARTICIPANT',
+						'position': callback.drag.id,
+						'target': callback.drop[0].id,
+					};
+					$.post("{% url "presider:ajax" id %}", post, function(data) {
+						if (data['status'] == "ok") {
+							console.log("MOVE_PARTICIPANT: OK");
+						} else {
+							alert("MOVE_PARTICIPANT: " + data['text']);
+						}
+					}, 'json');
+				}
+			})
+			.bind('dropstart', function(event, callback) {
+				$(callback.target).css({'opacity': .5, 'background-color': 'red'});
+			})
+			.bind('dropend', function(event, callback) {
+				$(callback.target).css({'opacity': '', 'background-color': '' });
+			});
+		div.appendTo('#video');
+	}
+}
+
+
+function open_videostream() {
+	var video = $('video')[0];
+	navigator.getUserMedia({audio: false, video: {optional: [ {minWidth:1280} ]}}, function(stream) {
+		video.src = window.URL.createObjectURL(stream);
+		pc = new webkitRTCPeerConnection(null, { optional: [{ RtpDataChannels: true }]});
+		dc = pc.createDataChannel('RTCDataChannel', { reliable: false });
+		pc.addStream(stream);
+		pc.createOffer(gotDescription);
+		function gotDescription(desc) {
+			pc.setLocalDescription(desc);
+		}
+	}, function(e) { console.log("Nope");});
+}
+
+function init_preside() {
+	data = {
+		'action': 'GET_CONFERENCE_INFO'
+	};
+	$.post("{% url "presider:ajax" id %}", data, draw_frames, 'json');
+	data = {
+		'action': 'LIST_PARTICIPANTS'
+	};
+	$.post("{% url "presider:ajax" id %}", data, draw_frames, 'json');
+
+	open_videostream();
+}
+
+$(document).ready(init_preside);
 
 </script>
 

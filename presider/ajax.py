@@ -1,69 +1,167 @@
-import simplejson as json
 import requests
+import simplejson as json
 
-def get_room_information(mcu, room):
-    r = requests.post(mcu + "/Select", data={'room': room, 'opts': ''})
-    try:
-        print r.text
-        conf = r.json()['conf']
-    except Exception as e:
-        print e
-        return "{}"
-
-
-    conf_info = {
-        'mixer_count': conf[0][0],
-        'frame_width': conf[0][1],
-        'frame_height': conf[0][2],
-        'room_name': conf[0][3],
-        'control': True if conf[0][4] == '+' else False,
-        'global_mute': True if conf[0][5] == '1' else False,
-        'vad_level': conf[0][6],
-        'vad_delay': conf[0][7],
-        'vad_timeout': conf[0][8],
-        'yuv_resizer_filter': conf[0][10],
-        'external_recorder': True if conf[0][11] == '1' else False
+class Ajax():
+    # These actions correspond to h323.h
+    ACTIONS = {
+        'OTFC_UNMUTE':                   0,
+        'OTFC_MUTE':                     1,
+        'OTFC_MUTE_ALL':                 2,
+        'OTFC_REMOVE_FROM_VIDEOMIXERS':  3,
+        'OTFC_REFRESH_VIDEO_MIXERS':     4,
+        'OTFC_DROP_MEMBER':              7,
+        'OTFC_VAD_NORMAL':               8,
+        'OTFC_VAD_CHOSEN_VAN':           9,
+        'OTFC_VAD_DISABLE_VAD':         10,
+        'OTFC_REMOVE_VMP':              11,
+        'OTFC_MOVE_VMP':                12,
+        'OTFC_SET_VMP_STATIC':          13,
+        'OTFC_VAD_CLICK':               14,
+        'OTFC_MIXER_ARRANGE_VMP':       15,
+        'OTFC_MIXER_SCROLL_LEFT':       16,
+        'OTFC_MIXER_SHUFFLE_VMP':       17,
+        'OTFC_MIXER_SCROLL_RIGHT':      18,
+        'OTFC_MIXER_CLEAR':             19,
+        'OTFC_MIXER_REVERT':            20,
+        'OTFC_GLOBAL_MUTE':             21,
+        'OTFC_SET_VAD_VALUES':          22,
+        'OTFC_TEMPLATE_RECALL':         23,
+        'OTFC_SAVE_TEMPLATE':           24,
+        'OTFC_DELETE_TEMPLATE':         25,
+        'OTFC_INVITE':                  32,
+        'OTFC_REMOVE_OFFLINE_MEMBER':   33,
+        'OTFC_DROP_ALL_ACTIVE_MEMBERS': 64,
+        'OTFC_INVITE_ALL_INACT_MMBRS':  65,
+        'OTFC_REMOVE_ALL_INACT_MMBRS':  66,
+        'OTFC_SAVE_MEMBERS_CONF':       67,
+        'OTFC_YUV_FILTER_MODE':         68,
+        'OTFC_TAKE_CONTROL':            69,
+        'OTFC_DECONTROL':               70,
+        'OTFC_ADD_VIDEO_MIXER':         71,
+        'OTFC_DELETE_VIDEO_MIXER':      72,
+        'OTFC_SET_VIDEO_MIXER_LAYOUT':  73,
+        'OTFC_SET_MEMBER_VIDEO_MIXER':  74,
+        'OTFC_VIDEO_RECORDER_START':    75,
+        'OTFC_VIDEO_RECORDER_STOP':     76,
     }
 
-    if conf[0][10] == '1':
-        conf_info['yuv_resizer_filter'] = True
-    elif conf[0][10] == '0':
-        conf_info['yuv_resizer_filter'] = False
-    else:
-        conf_info['yuv_resizer_filter'] = None
+    def __init__(self, backend_info, conference):
+        self.backend_info = backend_info
+        self.conference = conference
 
-    conf_info['rooms'] = []
-    for room in conf[0][9]:
-        conf_info['rooms'].append({
-            'room_name': room[0],
-            'member_count': room[1],
-            'is_moderated': True if room[2] == '+' else False,
-        })
+    def remove_participant(self, data):
 
-    conf_info['mixers'] = []
-    for mixer in conf[1:]:
-        mixer_info = {
-            'mockup_width': mixer[0][0],
-            'mockup_height': mixer[0][1],
-            'layout': mixer[0][2],
+        # FIXME The backend interface really needs to be fixed.
+        post = {
+            'room':self.backend_info['room'],
+            'otfc': 1,
+            'action': self.ACTIONS['OTFC_REMOVE_VMP'],
+            'v': 0, 
+            'o': data['position'],
         }
-        mixer_info['frames'] = []
-        for frame in mixer[1]:
-            mixer_info['frames'].append({
-                'pos_x': frame[0],
-                'pos_y': frame[1],
-                'width': frame[2],
-                'height': frame[3],
-            });
 
-        mixer_info['members'] = {}
-        for n, id in mixer[2].iteritems():
-            mixer_info['members'][n] = {
-                'id': id,
+        r = requests.post(self.backend_info['mcu'] + "/Select", data=post)
+        try:
+            print r.text
+            conf = r.json()['conf']
+        except Exception as e:
+            pass # This thing does not do JSON yet
+            #return {'status': 'error', 'text': repr(e)}
+
+        return { 'status': 'ok' }
+
+
+
+    def move_participant(self, data):
+
+        # FIXME The backend interface really needs to be fixed.
+        post = {
+            'room':self.backend_info['room'],
+            'otfc': 1,
+            'action': self.ACTIONS['OTFC_MOVE_VMP'],
+            'v': 0, 
+            'o': data['position'],
+            'o2': 0,                # Unknown what this does.
+            'o3': data['target'],
+        }
+
+        r = requests.post(self.backend_info['mcu'] + "/Select", data=post)
+        try:
+            print r.text
+            conf = r.json()['conf']
+        except Exception as e:
+            pass # This thing does not do JSON yet
+            #return {'status': 'error', 'text': repr(e)}
+
+        return { 'status': 'ok' }
+
+    def list_participants(self, data):
+        return { 'status': 'error', 'text': "Not implemented." } # FIXME
+
+    def get_conference_information(self, data):
+
+        r = requests.post(self.backend_info['mcu'] + "/Select", data={'room': self.backend_info['room'], 'opts': ''})
+        try:
+            print r.text
+            conf = r.json()['conf']
+        except Exception as e:
+            return {'status': 'error', 'text': repr(e)}
+
+
+        conf_info = {
+            'mixer_count': conf[0][0],
+            'frame_width': conf[0][1],
+            'frame_height': conf[0][2],
+            'room_name': conf[0][3],
+            'control': True if conf[0][4] == '+' else False,
+            'global_mute': True if conf[0][5] == '1' else False,
+            'vad_level': conf[0][6],
+            'vad_delay': conf[0][7],
+            'vad_timeout': conf[0][8],
+            'yuv_resizer_filter': conf[0][10],
+            'external_recorder': True if conf[0][11] == '1' else False
+        }
+
+        if conf[0][10] == '1':
+            conf_info['yuv_resizer_filter'] = True
+        elif conf[0][10] == '0':
+            conf_info['yuv_resizer_filter'] = False
+        else:
+            conf_info['yuv_resizer_filter'] = None
+
+        conf_info['rooms'] = []
+        for room in conf[0][9]:
+            conf_info['rooms'].append({
+                'room_name': room[0],
+                'member_count': room[1],
+                'is_moderated': True if room[2] == '+' else False,
+            })
+
+        conf_info['mixers'] = []
+        for mixer in conf[1:]:
+            mixer_info = {
+                'mockup_width': mixer[0][0],
+                'mockup_height': mixer[0][1],
+                'layout': mixer[0][2],
             }
-        for n, type in mixer[3].iteritems():
-            mixer_info['members'][n]['type'] = (None, 'static', 'vad_normal', 'vad_chosen_van')[type]
+            mixer_info['frames'] = []
+            for frame in mixer[1]:
+                mixer_info['frames'].append({
+                    'pos_x': frame[0],
+                    'pos_y': frame[1],
+                    'width': frame[2],
+                    'height': frame[3],
+                });
 
-        conf_info['mixers'].append(mixer_info)
+            mixer_info['members'] = {}
+            for n, id in mixer[2].iteritems():
+                mixer_info['members'][n] = {
+                    'id': id,
+                }
+            for n, type in mixer[3].iteritems():
+                mixer_info['members'][n]['type'] = (None, 'static', 'vad_normal', 'vad_chosen_van')[type]
 
-    return json.dumps(conf_info)
+            conf_info['mixers'].append(mixer_info)
+
+        conf_info['status'] = 'ok'
+        return conf_info

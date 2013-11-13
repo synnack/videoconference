@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from scheduler.models import Reservation, MCU
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import requires_csrf_token
 from django.core.urlresolvers import reverse
 from django.forms import ValidationError
 from django.http import HttpResponse
-from presider import ajax as ajax_mod
+from presider.ajax import Ajax
+import simplejson as json
 
 @login_required
 def ongoing_conferences(request):
@@ -13,7 +15,9 @@ def ongoing_conferences(request):
 
     return render(request, "presider/ongoing_conferences.html", context)
 
+
 @login_required
+@requires_csrf_token
 def preside_over_conference(request, id):
     conference = Reservation.objects.get(id=id)
     if conference.user != request.user:
@@ -28,9 +32,29 @@ def preside_over_conference(request, id):
 def ajax(request,id):
     conference = Reservation.objects.get(id=id)
     if conference.user != request.user:
-        return HttpResponse("Nope")
+        return HttpResponse("{}")
 
-    # Get room information call: Not really, but FIXME
-    response = ajax_mod.get_room_information('http://127.0.0.1:1420', 'room101')
-    return HttpResponse(response)
+    # FIXME Hardcoded
+    backend_info = {
+            'mcu': 'http://127.0.0.1:1420',
+            'room': 'room101',
+    }
+
+    ajax = Ajax(backend_info=backend_info, conference=conference)
+
+    actions = {
+            'GET_CONFERENCE_INFO':   'get_conference_information',
+            'LIST_PARTICIPANTS':     'list_participants',
+            'MOVE_PARTICIPANT':      'move_participant',
+            'REMOVE_PARTICIPANT':    'remove_participant',
+    }
+
+    if not 'action' in request.POST or not request.POST['action'] in actions:
+        return HttpResponse("{}")
+
+    # Find and call the method in the ajax class instance
+    func = getattr(ajax, actions[request.POST['action']])
+    response = func(request.POST)
+
+    return HttpResponse(json.dumps(response))
 
