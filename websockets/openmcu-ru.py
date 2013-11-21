@@ -1,8 +1,29 @@
+"""
+Websocket OpenMCU-ru backend. Communicates with the OpenMCU-ru MCU... sorta
+"""
+#
+# Copyright (C) by Wilco Baan Hofman <wilco@baanhofman.nl> 2013
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import requests
-import simplejson as json
 
-class Ajax():
-    # These actions correspond to h323.h
+class OpenMCUru(MCUInterface):
+    """
+    Interface to the OpenMCU-ru HTTP POST or whatever backend.
+    """
+    # These actions correspond to h323.h in OpenMCU-ru
     ACTIONS = {
         'OTFC_UNMUTE':                   0,
         'OTFC_MUTE':                     1,
@@ -45,13 +66,8 @@ class Ajax():
         'OTFC_VIDEO_RECORDER_STOP':     76,
     }
 
-    def __init__(self, backend_info, conference):
-        self.backend_info = backend_info
-        self.conference = conference
 
     def remove_participant(self, data):
-
-        # FIXME The backend interface really needs to be fixed.
         post = {
             'room':self.backend_info['room'],
             'otfc': 1,
@@ -60,7 +76,7 @@ class Ajax():
             'o': data['position'],
         }
 
-        r = requests.post(self.backend_info['mcu'] + "/Select", data=post)
+        r = requests.post("http://" + self.backend_info['mcu'] + ":1420/Select", data=post)
         try:
             print r.text
             conf = r.json()['conf']
@@ -68,13 +84,9 @@ class Ajax():
             pass # This thing does not do JSON yet
             #return {'status': 'error', 'text': repr(e)}
 
-        return { 'status': 'ok' }
-
 
 
     def move_participant(self, data):
-
-        # FIXME The backend interface really needs to be fixed.
         post = {
             'room':self.backend_info['room'],
             'otfc': 1,
@@ -85,7 +97,7 @@ class Ajax():
             'o3': data['target'],
         }
 
-        r = requests.post(self.backend_info['mcu'] + "/Select", data=post)
+        r = requests.post("http://" + self.backend_info['mcu'] + ":1420/Select", data=post)
         try:
             print r.text
             conf = r.json()['conf']
@@ -93,19 +105,18 @@ class Ajax():
             pass # This thing does not do JSON yet
             #return {'status': 'error', 'text': repr(e)}
 
-        return { 'status': 'ok' }
 
     def list_participants(self, data):
-        return { 'status': 'error', 'text': "Not implemented." } # FIXME
+        self.sockets.send_local('NOTIFY_ERROR', { 'text': "LIST_PARTICIPANTS not implemented." }) # FIXME
 
     def get_conference_information(self, data):
 
-        r = requests.post(self.backend_info['mcu'] + "/Select", data={'room': self.backend_info['room'], 'opts': ''})
+        r = requests.post("http://" +self.backend_info['mcu'] + ":1420/Select", data={'room': self.backend_info['room'], 'opts': ''})
         try:
             print r.text
             conf = r.json()['conf']
         except Exception as e:
-            return {'status': 'error', 'text': repr(e)}
+            self.sockets.send_local('NOTIFY_ERROR', { 'text': repr(e) })
 
 
         conf_info = {
@@ -163,5 +174,5 @@ class Ajax():
 
             conf_info['mixers'].append(mixer_info)
 
-        conf_info['status'] = 'ok'
-        return conf_info
+        self.sockets.send_local("NOTIFY_CONFERENCE_INFO", conf_info)
+

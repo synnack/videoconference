@@ -3,8 +3,13 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 class MCU(models.Model):
+    TYPE_OPTIONS = (
+        ("medooze", "Medooze"),
+        ("openmcu-ru", "OpenMCU-ru")
+    )
     name = models.CharField(max_length=60)
     hostname = models.CharField(max_length=200)
+    mcu_type = models.CharField(max_length=25, choices=TYPE_OPTIONS, default="medooze")
     sip_port = models.IntegerField()
     http_port = models.IntegerField()
 
@@ -27,7 +32,7 @@ class Reservation(models.Model):
     begin_time = models.DateTimeField()
     end_time = models.DateTimeField()
     participant_count = models.IntegerField(null=False)
-    status = models.CharField(max_length=25, choices=STATUS_OPTIONS, default="planned") # This is really one choice with multiple options. Dafuq?
+    status = models.CharField(max_length=25, choices=STATUS_OPTIONS, default="planned")
 
     def __str__(self):
         return self.name
