@@ -113,7 +113,8 @@ def websocket_app(environ, start_response):
                 'LIST_PARTICIPANTS':     'list_participants',
                 'MOVE_PARTICIPANT':      'move_participant',
                 'REMOVE_PARTICIPANT':    'remove_participant',
-                'JOIN_CONFERENCE':       'join_conference',
+                'OFFER_SDP':             'offer_sdp',
+                'SDP_OK':                'sdp_ok',
         }
 
         if not 'message_type' in message:

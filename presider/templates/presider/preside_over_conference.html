@@ -263,7 +263,7 @@ function open_videostream() {
 		pc.onicecandidate = function (e) {
 			// null is the last candidate, send the offer.
 			if (e.candidate == null) {
-				socket.send('JOIN_CONFERENCE', {
+				socket.send('OFFER_SDP', {
 					'sdp': window.offer.sdp
 				});
 				return;
@@ -292,10 +292,10 @@ function open_videostream() {
 
 function init_preside() {
 	socket = new WebSocketDispatcher("ws://127.0.0.1:8000/conference/{{ id }}"); // FIXME: Must be 'wss', relayed to the webserver on /socket/conference/{{ id }}
-	socket.bind("JOIN_CONFERENCE", function (data) {
+	socket.bind("OFFER_SDP", function (data) {
 		offer = new RTCSessionDescription({'type': 'answer', 'sdp': data['sdp']});
 		pc.setRemoteDescription(offer, function() {
-			console.log("Okay, should have a video stream now.");
+			socket.send('SDP_OK', null);
 		}, function (e) {
 			console.log("Failed to set up video stream:");
 			console.log(e);

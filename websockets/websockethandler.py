@@ -25,10 +25,6 @@ import re
 from websockets.medoozemcu import MedoozeMCU
 from websockets.sip import SIP
 
-#
-# TODO: Split this file up into many, many pieces
-#
-
 class Handler():
     def __init__(self, backend_info, conference, sockets):
         self.backend_info = backend_info
@@ -36,17 +32,20 @@ class Handler():
         self.sockets = sockets
 
     # Public methods
-    def join_conference(self, data):
+    def offer_sdp(self, data):
         sip = SIP('127.0.0.1', 'room101') # FIXME!!
         sip.bind('trying', self._sip_trying)
         sip.bind('ringing', self._sip_ringing)
-        sip.bind('established', self._sip_established)
+        sip.bind('invite_ok', self._sip_invite_ok)
         sip.bind('media-error', self._sip_media_error)
         sip.bind('other', self._sip_other)
 
         self.sockets.add_sip(sip)
 
         sip.send_invite(data['sdp'])
+
+    def sdp_ok(self, data):
+        self.sockets.sip_connections[self.sockets.local].send_ack()
 
     def list_mosaic(self, data):
         mcu = MedoozeMCU('127.0.0.1')
@@ -61,10 +60,10 @@ class Handler():
     def _sip_ringing(self, headers, body):
         self.sockets.send_local('NOTIFY_STATUS', { 'text': 'Ringing...' })
 
-    def _sip_established(self, headers, body):
+    def _sip_invite_ok(self, headers, body):
         # Not sure what is required for FireFox.. but at least it doesn't like these attributes
         body = re.sub(r"\na=(extmap|ssrc|ice-lite).*\r", "", body, 0)
-        self.sockets.send_local('JOIN_CONFERENCE', { 'sdp': body })
+        self.sockets.send_local('OFFER_SDP', { 'sdp': body })
 
     def _sip_media_error(self, headers, body):
         self.sockets.send_local('NOTIFY_ERROR', { 'text': "Unsupported Media Type.." })

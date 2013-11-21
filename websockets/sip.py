@@ -34,6 +34,9 @@ class SIP():
     Websockets raw SIP handler.
     """
     def __init__(self, hostname, room, port=5060, method='UDP'):
+        """
+        Connects to a SIP server and spawns a greenlet which handles the incoming SIP events
+        """
         self.method = method
         self.hostname = hostname
         self.port = port
@@ -46,13 +49,18 @@ class SIP():
         self.to_hdr = None
 
     def bind(self, action, fn):
+        """
+        Bind function as action handler
+        """
         if not action in self.handlers:
             self.handlers[action] = []
         self.handlers[action].append(fn)
 
     def send_invite(self, sdp):
+        """
+        Send the SIP INVITE as client part and initial step of the SDP negotiation
+        """
         self.callid = random.randint(1000,9999999999)
-        gsocket.wait_write(self.socket.fileno())
         invite = "INVITE sip:" + self.room + "@" + self.hostname + " SIP/2.0\r\n" + \
                  "Via: SIP/2.0/TCP " + self.hostname + ":" + str(self.port) + ";rport;branch=z9hG4bK1465117333\r\n" + \
                  "From: <sip:attendant@nikhef.nl>;tag=1281328591\r\n" + \
@@ -66,10 +74,30 @@ class SIP():
                  "User-Agent: NIKHEF Video conferencing\r\n" + \
                  "Subject: Phone call\r\n" + \
                  "Content-Length: " + str(len(sdp)) + "\r\n\r\n"
+        gsocket.wait_write(self.socket.fileno())
         self.socket.send(invite)
         self.socket.send(sdp)
 
+    def send_ack(self):
+        """
+        Send the SIP ACK as a notification that the MCU SDP offer is accepted by the browser.
+        """
+        reply = "ACK " + self.contact + " SIP/2.0\r\n" + \
+                "Via: SIP/2.0/TCP " + self.hostname + ":" + str(self.port) + ";rport;branch=z9hG4bK1465117333\r\n" + \
+                "Max-Forwards: 70\r\n" + \
+                "To: " + self.to_hdr + "\r\n" + \
+                "From: " + self.from_hdr + "\r\n" + \
+                "Call-ID: " + str(self.callid) + "\r\n" + \
+                "CSeq: 20 ACK\r\n" + \
+                "Content-Length: 0\r\n\r\n"
+        gsocket.wait_write(self.socket.fileno())
+        self.socket.send(reply)
+
     def wait_for_sip_read(self):
+        """
+        This function waits for events and dispatches event handlers.
+        This function should run inside a greenlet.
+        """
         while True:
             fileno = self.socket.fileno()
             gsocket.wait_read(fileno)
@@ -79,7 +107,8 @@ class SIP():
             sip_status_line, parse_headers = header.split("\r\n", 1)
             sip_status = sip_status_line.split(" ")
 
-            print header, body
+            # FIXME Debug info
+            print sip_status_line
 
             if sip_status[0] != "SIP/2.0":
                 print "WARNING: Got:", sip_status_line
@@ -88,7 +117,6 @@ class SIP():
                 continue
 
             headers = Message(StringIO(parse_headers))
-
 
             if sip_status[1] == '100' and headers['cseq'] == "20 INVITE":
                 if 'trying' in self.handlers:
@@ -105,21 +133,10 @@ class SIP():
                 self.to_hdr = headers['to']
                 self.from_hdr = headers['from']
 
-                reply = "ACK " + self.contact + " SIP/2.0\r\n" + \
-                        "Via: SIP/2.0/TCP " + self.hostname + ":" + str(self.port) + ";rport;branch=z9hG4bK1465117333\r\n" + \
-                        "Max-Forwards: 70\r\n" + \
-                        "To: " + self.to_hdr + "\r\n" + \
-                        "From: " + self.from_hdr + "\r\n" + \
-                        "Call-ID: " + str(self.callid) + "\r\n" + \
-                        "CSeq: 20 ACK\r\n" + \
-                        "Content-Length: 0\r\n\r\n"
-                gsocket.wait_write(fileno)
-                self.socket.send(reply)
-
-
-                if 'established' in self.handlers:
-                    for fn in self.handlers['established']:
+                if 'invite_ok' in self.handlers:
+                    for fn in self.handlers['invite_ok']:
                         fn(headers, body)
+
             elif sip_status[1] == '415' and headers['cseq'] == "20 INVITE":
                 if 'media-error' in self.handlers:
                     for fn in self.handlers['media-error']:
@@ -131,7 +148,9 @@ class SIP():
                         fn(headers, body)
 
     def close(self):
-        print "Sending BYE"
+        """
+        This function sends a BYE on the SIP socket, kills the incoming event handler greenlet and closes the SIP socket
+        """
         gsocket.wait_write(self.socket.fileno())
         if self.contact:
             self.socket.send("BYE " + self.contact + " SIP/2.0\r\n" + \
