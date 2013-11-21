@@ -1,22 +1,27 @@
 """
 Websocket raw SIP handler. Allows us to defer negotiation to the client.
+Uses gevent greenlet to wait for data and dispatch events.
+
+Wrote this myself because SIP libraries do not allow me to supply SDP data from
+the browser
 """
-#
-# Copyright (C) by Wilco Baan Hofman <wilco@baanhofman.nl> 2013
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+__copyright__ = """
+Copyright (C) by Wilco Baan Hofman <wilco@baanhofman.nl> 2013
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 from gevent import socket as gsocket
 from gevent import Greenlet
