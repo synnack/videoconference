@@ -66,8 +66,13 @@ class Handler():
         self.sockets.send_local("NOTIFY_MOSAIC", ret)
 
     def move_participant(self, data):
+        if data['position'] == data['target']:
+            # Well, that was easy
+            return
+
         mcu = MedoozeMCU('127.0.0.1')
         ret = mcu.move_participant(data)
+
 
         self.sockets.send_conference("NOTIFY_PARTICIPANT_MOVE", ret)
 
