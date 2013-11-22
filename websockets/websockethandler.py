@@ -24,6 +24,18 @@ import re
 
 from websockets.medoozemcu import MedoozeMCU
 from websockets.sip import SIP
+"""
+<?xml version="1.0" encoding="UTF-8"?>
+<methodCall>
+    <methodName>SetMosaicSlot</methodName>
+    <params>
+        <param><value><i4>466419712</i4></value></param>
+        <param><value><i4>0</i4></value></param>
+        <param><value><i4>4</i4></value></param>
+        <param><value><i4>502</i4></value></param>
+    </params>
+</methodCall>
+"""
 
 class Handler():
     def __init__(self, backend_info, conference, sockets):
@@ -52,6 +64,18 @@ class Handler():
         ret = mcu.list_mosaic(data)
 
         self.sockets.send_local("NOTIFY_MOSAIC", ret)
+
+    def move_participant(self, data):
+        mcu = MedoozeMCU('127.0.0.1')
+        ret = mcu.move_participant(data)
+
+        self.sockets.send_conference("NOTIFY_PARTICIPANT_MOVE", ret)
+
+    def remove_participant(self, data):
+        mcu = MedoozeMCU('127.0.0.1')
+        ret = mcu.remove_participant(data)
+
+        self.sockets.send_conference("NOTIFY_PARTICIPANT_REMOVE", ret)
 
     # Private methods
     def _sip_trying(self, headers, body):

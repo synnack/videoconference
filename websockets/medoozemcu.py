@@ -30,5 +30,30 @@ class MedoozeMCU(MCUInterface):
         self.mcu = xmlrpclib.ServerProxy("http://127.0.0.1:8085/mcu/mcu")
 
     def list_mosaic(self, data):
-        methods = self.mcu.GetMosaicLayout()
-        return methods
+        methods = self.mcu.GetMosaicLayout(466419712, 0)
+
+        if not 'returnVal' in methods:
+            return {}
+
+        positions = []
+        for value in methods['returnVal'][0]['Positions']:
+            positions.append({
+                'pos_x': value['Left'],
+                'pos_y': value['Top'],
+                'width': value['Width'],
+                'height': value['Height'],
+            })
+
+        return {
+            'width': methods['returnVal'][0]['Width'],
+            'height': methods['returnVal'][0]['Height'],
+            'positions': positions
+        }
+
+    def move_participant(self, data):
+        self.mcu.SetMosaicSlot(466419712, 0, int(data['target']), 503)
+        self.mcu.SetMosaicSlot(466419712, 0, int(data['position']), 0)
+
+
+    def remove_participant(self, data):
+        self.mcu.SetMosaicSlot(466419712, 0, int(data['position']), 0)

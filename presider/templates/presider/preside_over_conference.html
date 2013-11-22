@@ -117,19 +117,19 @@ var WebSocketDispatcher = function (url) {
 <script type="text/javascript"> // FIXME Move to separate file
 var Mosaic = function () {
 	this.update_positions = function (data) {
-		var frame_height = data['frame_height'];
-		var frame_width = data['frame_width'];
+		var frame_height = data['height'];
+		var frame_width = data['width'];
 		var box_width = 800;
 		var box_height = 450;
 
 		// Destroy divs we're no longer using
-		for (var i = data['mixers'][0]['positions'].length; (obj = $('div#mosaic_pos' + i)).length > 0; i++) {
+		for (var i = data['positions'].length; (obj = $('div#mosaic_pos' + i)).length > 0; i++) {
 			obj.remove();
 		}
 
 		// Create and/or update all the positions
-		for (i in data['mixers'][0]['positions']) {
-			var position = data['mixers'][0]['positions'][i];
+		for (i in data['positions']) {
+			var position = data['positions'][i];
 			var div = $('div#mosaic_pos'+i);
 			if (div.length == 0) {
 				div = $(document.createElement("div"))
@@ -151,10 +151,10 @@ var Mosaic = function () {
 			div
 				.css({
 					'position': 'absolute',
-					'left':   Math.floor(frame['pos_x']  / position_width  * box_width),
-					'top':    Math.floor(frame['pos_y']  / position_height * box_height),
-					'width':  Math.floor(frame['width']  / position_width  * box_width),
-					'height': Math.floor(frame['height'] / position_height * box_height),
+					'left':   Math.floor(position['pos_x']  / frame_width  * box_width),
+					'top':    Math.floor(position['pos_y']  / frame_height * box_height),
+					'width':  Math.floor(position['width']  / frame_width  * box_width),
+					'height': Math.floor(position['height'] / frame_height * box_height),
 				});
 
 		}
