@@ -28,15 +28,28 @@ class MedoozeMCU(MCUInterface):
     """
     def __init__(self, hostname):
         self.mcu = xmlrpclib.ServerProxy("http://127.0.0.1:8085/mcu/mcu")
+        self.conference = 2002649088
 
     def list_mosaic(self, data):
-        methods = self.mcu.GetMosaicLayout(466419712, 0)
+        layout = self.mcu.GetMosaicLayout(self.conference, 0)
 
-        if not 'returnVal' in methods:
+        print layout
+
+        if layout['returnCode'] == 0:
+            if layout['errorMsg'] == "Conference does not exist":
+                val = self.mcu.CreateConference("87bcc0c1-4ec3-46ea-9b2e-63e9c740f5c7", 0, 0, 8000)
+                print val['returnVal'][0]
+                self.conference = val['returnVal'][0]
+                layout = self.mcu.GetMosaicLayout(self.conference, 0)
+            else:
+                return {}
+
+        print layout
+        if not 'returnVal' in layout:
             return {}
 
         positions = []
-        for value in methods['returnVal'][0]['Positions']:
+        for value in layout['returnVal'][0]['Positions']:
             positions.append({
                 'pos_x': value['Left'],
                 'pos_y': value['Top'],
@@ -45,15 +58,23 @@ class MedoozeMCU(MCUInterface):
             })
 
         return {
-            'width': methods['returnVal'][0]['Width'],
-            'height': methods['returnVal'][0]['Height'],
+            'width': layout['returnVal'][0]['Width'],
+            'height': layout['returnVal'][0]['Height'],
             'positions': positions
         }
 
     def move_participant(self, data):
-        self.mcu.SetMosaicSlot(466419712, 0, int(data['target']), 503)
-        self.mcu.SetMosaicSlot(466419712, 0, int(data['position']), 0)
+        self.mcu.SetMosaicSlot(self.conference, 0, int(data['target']), 502)
+        self.mcu.SetMosaicSlot(self.conference, 0, int(data['position']), 0)
 
+        return { 'position': data['position'], 'target': data['target'] }
 
     def remove_participant(self, data):
-        self.mcu.SetMosaicSlot(466419712, 0, int(data['position']), 0)
+        self.mcu.SetMosaicSlot(self.conference, 0, int(data['position']), 0)
+
+        return { 'position': data['position'] }
+
+    def list_participants(self, data):
+        obj = self.mcu.ListParticipants(self.conference, 0)
+
+        return obj

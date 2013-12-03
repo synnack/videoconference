@@ -82,6 +82,12 @@ class Handler():
 
         self.sockets.send_conference("NOTIFY_PARTICIPANT_REMOVE", ret)
 
+    def list_participants(self, data):
+        mcu = MedoozeMCU('127.0.0.1')
+        ret = mcu.list_participants(data)
+
+        self.sockets.send_local("NOTIFY_PARTICIPANTS_LIST", ret)
+
     # Private methods
     def _sip_trying(self, headers, body):
         self.sockets.send_local('NOTIFY_STATUS', { 'text': 'Trying...' })
