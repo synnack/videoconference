@@ -8,11 +8,11 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        db.rename(u'scheduler_meetingroom', u'scheduler_reservation')
+        db.rename_table(u'scheduler_meetingroom', u'scheduler_reservation')
 
 
     def backwards(self, orm):
-        db.rename(u'scheduler_reservation', u'scheduler_meetingroom')
+        db.rename_table(u'scheduler_reservation', u'scheduler_meetingroom')
 
 
     models = {
