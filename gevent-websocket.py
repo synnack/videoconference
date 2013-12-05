@@ -20,6 +20,8 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from gevent import monkey
+monkey.patch_all()
 from videoconference.wsgi import application
 import simplejson as json
 
@@ -39,6 +41,36 @@ from django.contrib.sessions.models import Session
 from django.utils import timezone
 from copy import copy
 
+import socket
+
+from geventwebsocket.python_fixes import makefile
+import uwsgi
+
+
+class WSGIMiddlewareHandler(WebSocketHandler):
+    def __init__(self, environ, start_response, application):
+        self.environ = environ
+        self.socket = socket.fromfd(uwsgi.connection_fd(), socket.AF_INET, socket.SOCK_STREAM)
+        self.rfile = makefile(self.socket)
+        self.application = application
+        self.start_response = start_response
+        self.request_version = environ['SERVER_PROTOCOL']
+
+    def log_request(self):
+        pass
+
+
+def ws_middleware(wrapped_app):
+    def application(environ, start_response):
+        handler = WSGIMiddlewareHandler(environ, start_response, wrapped_app)
+        upgrade = environ.get('HTTP_UPGRADE', '').lower()
+        if upgrade == 'websocket':
+            connection = environ.get('HTTP_CONNECTION', '').lower()
+            if 'upgrade' in connection:
+                return handler._handle_websocket()
+        return wrapped_app(environ, start_response)
+    return application
+
 
 
 global_sockets = WebSockets()
@@ -48,6 +80,7 @@ def websocket_app(environ, start_response):
         print "Not a websocket"
         return
     ws = environ["wsgi.websocket"]
+    print ws
 
     # Important to call, otherwise we may get stale user sessions
     SessionStore.clear_expired() 
@@ -69,11 +102,11 @@ def websocket_app(environ, start_response):
         return
 
     path = environ['PATH_INFO'].split('/')
-    if len(path) < 3 or path[1] != 'conference' or not path[2].isdigit():
+    if len(path) < 3 or path[1] != 'websocket' or path[2] != 'conference' or not path[3].isdigit():
         print "Invalid path"
         return
 
-    conference_id = int(path[2])
+    conference_id = int(path[3])
 
     conference = Reservation.objects.get(pk=conference_id)
     if conference.user != user:
@@ -96,41 +129,48 @@ def websocket_app(environ, start_response):
     interface = Handler(backend_info=backend_info, conference=conference, sockets=socket_info)
 
     while True:
-        data = ws.receive()
-        if data is None:
-            socket_info.close(socket_info.local)
-            return
-
         try:
-            message = json.loads(data)
-        except Exception as e:
-            print repr(e), data
-            return
+            data = ws.receive()
+            if data is None:
+                socket_info.close(socket_info.local)
+                return
+
+            try:
+                message = json.loads(data)
+            except Exception as e:
+                print repr(e), data
+                return
 
 
-        handlers = {
-                'LIST_MOSAIC':           'list_mosaic',
-                'LIST_PARTICIPANTS':     'list_participants',
-                'MOVE_PARTICIPANT':      'move_participant',
-                'REMOVE_PARTICIPANT':    'remove_participant',
-                'OFFER_SDP':             'offer_sdp',
-                'SDP_OK':                'sdp_ok',
-        }
+            handlers = {
+                    'LIST_MOSAIC':           'list_mosaic',
+                    'LIST_PARTICIPANTS':     'list_participants',
+                    'MOVE_PARTICIPANT':      'move_participant',
+                    'REMOVE_PARTICIPANT':    'remove_participant',
+                    'OFFER_SDP':             'offer_sdp',
+                    'SDP_OK':                'sdp_ok',
+            }
 
-        if not 'message_type' in message:
-            print "Message has no message type"
-            return
-        if not message['message_type'] in handlers:
-            print "No handler for message type", message['message_type']
-            return
+            if not 'message_type' in message:
+                print "Message has no message type"
+                return
+            if not message['message_type'] in handlers:
+                print "No handler for message type", message['message_type']
+                return
 
-        print message['message_type'], "received"
+            print message['message_type'], "received"
 
-        # Find and call the method in the MCUInterface class instance
-        func = getattr(interface, handlers[message['message_type']])
-        func(message['data'])
+            # Find and call the method in the MCUInterface class instance
+            func = getattr(interface, handlers[message['message_type']])
+            func(message['data'])
 
+        except:
+            socket_info.close(socket_info.local)
+            ws.close()
+            raise
 
-server = pywsgi.WSGIServer(("", 8000), websocket_app,
-    handler_class=WebSocketHandler)
-server.serve_forever()
+if __name__ == "__main__":
+    server = pywsgi.WSGIServer(("", 8000), websocket_app, handler_class=WebSocketHandler)
+    server.serve_forever()
+else:
+    application = ws_middleware(websocket_app)
