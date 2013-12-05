@@ -291,7 +291,7 @@ function open_videostream() {
 }
 
 function init_preside() {
-	socket = new WebSocketDispatcher("ws://127.0.0.1:8000/conference/{{ id }}"); // FIXME: Must be 'wss', relayed to the webserver on /socket/conference/{{ id }}
+	socket = new WebSocketDispatcher("wss://" + window.location.hostname + "/websocket/conference/{{ id }}");
 	socket.bind("OFFER_SDP", function (data) {
 		offer = new RTCSessionDescription({'type': 'answer', 'sdp': data['sdp']});
 		pc.setRemoteDescription(offer, function() {

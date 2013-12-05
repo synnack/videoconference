@@ -45,11 +45,12 @@ class Handler():
 
     # Public methods
     def offer_sdp(self, data):
-        sip = SIP('127.0.0.1', 'room101') # FIXME!!
+        sip = SIP('127.0.0.1', 'room101', port=5080) # FIXME!!
         sip.bind('trying', self._sip_trying)
         sip.bind('ringing', self._sip_ringing)
         sip.bind('invite_ok', self._sip_invite_ok)
         sip.bind('media-error', self._sip_media_error)
+        sip.bind('not_found', self._sip_not_found)
         sip.bind('other', self._sip_other)
 
         self.sockets.add_sip(sip)
@@ -99,6 +100,9 @@ class Handler():
         # Not sure what is required for FireFox.. but at least it doesn't like these attributes
         body = re.sub(r"\na=(extmap|ssrc|ice-lite).*\r", "", body, 0)
         self.sockets.send_local('OFFER_SDP', { 'sdp': body })
+
+    def _sip_not_found(self, headers, body):
+        self.sockets.send_local('NOTIFY_ERROR', { 'text': "Endpoint does not exist.." })
 
     def _sip_media_error(self, headers, body):
         self.sockets.send_local('NOTIFY_ERROR', { 'text': "Unsupported Media Type.." })

@@ -27,7 +27,7 @@ class MedoozeMCU(MCUInterface):
     Interface to the Medooze MCU XMLRPC backend.
     """
     def __init__(self, hostname):
-        self.mcu = xmlrpclib.ServerProxy("http://127.0.0.1:8085/mcu/mcu")
+        self.mcu = xmlrpclib.ServerProxy("http://127.0.0.1:8080/mcu/mcu")
         self.conference = 2002649088
 
     def list_mosaic(self, data):

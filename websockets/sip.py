@@ -137,6 +137,11 @@ class SIP():
                     for fn in self.handlers['invite_ok']:
                         fn(headers, body)
 
+            elif sip_status[1] == '404' and headers['cseq'] == "20 INVITE":
+                if 'not_found' in self.handlers:
+                    for fn in self.handlers['not_found']:
+                        fn(headers, body)
+
             elif sip_status[1] == '415' and headers['cseq'] == "20 INVITE":
                 if 'media-error' in self.handlers:
                     for fn in self.handlers['media-error']:
