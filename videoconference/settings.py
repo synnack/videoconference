@@ -1,4 +1,5 @@
 # Django settings for videoconference project.
+from os import path
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -31,6 +32,9 @@ ALLOWED_HOSTS = []
 # In a Windows environment this must be set to your system time zone.
 TIME_ZONE = 'Europe/Amsterdam'
 
+LOGIN_URL = '/saml2/login'
+SESSION_COOKIE_AGE = 3600
+
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-gb'
@@ -61,7 +65,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = '/home/wilco/src/frontend/static/'
+STATIC_ROOT = '/root/videoconference/static/'
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -92,6 +96,12 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'djangosaml2.backends.Saml2Backend',
+)
+
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -120,12 +130,11 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
+    'djangosaml2',
     'videoconference',
     'scheduler',
     'presider',
-
     'south', # Has to be the very last one
 )
 
@@ -160,5 +169,87 @@ LOGGING = {
     }
 }
 
-SESSION_COOKIE_AGE = 3600
 SESSION_SAVE_EVERY_REQUEST = True
+
+import saml2
+BASEDIR = path.dirname(path.abspath(__file__))
+SAML_CONFIG = {
+  # full path to the xmlsec1 binary programm
+  'xmlsec_binary': '/usr/bin/xmlsec1',
+
+  # your entity id, usually your subdomain plus the url to the metadata view
+  'entityid': 'http://poortwachter.nikhef.nl/saml2/metadata/',
+
+  # directory with attribute mapping
+  'attribute_map_dir': path.join(BASEDIR, 'attribute-maps'),
+
+  # this block states what services we provide
+  'service': {
+      # we are just a lonely SP
+      'sp' : {
+          'name': 'Nikhef Video Conferencing',
+          'endpoints': {
+              # url and binding to the assetion consumer service view
+              # do not change the binding or service name
+              'assertion_consumer_service': [
+                  ('http://poortwachter.nikhef.nl/saml2/acs/',
+                   saml2.BINDING_HTTP_POST),
+                  ],
+              # url and binding to the single logout service view
+              # do not change the binding or service name
+              'single_logout_service': [
+                  ('http://poortwachter.nikhef.nl/saml2/ls/',
+                   saml2.BINDING_HTTP_REDIRECT),
+                  ],
+              },
+
+           # attributes that this project need to identify a user
+          'required_attributes': ['uid', 'sn', 'givenName', 'cn', 'displayName', 'mail', 'eduPersonAffiliation', 'eduPersonPrincipalName' ],
+
+           # attributes that may be useful to have but not required
+          'optional_attributes': [],
+
+          # in this section the list of IdPs we talk to are defined
+          'idp': {
+              # we do not need a WAYF service since there is
+              # only an IdP defined here. This IdP should be
+              # present in our metadata
+
+              # the keys of this dictionary are entity ids
+              'https://engine.surfconext.nl/authentication/idp/metadata': {
+                  'single_sign_on_service': {
+                      saml2.BINDING_HTTP_REDIRECT: 'https://engine.surfconext.nl/authentication/idp/single-sign-on',
+                      },
+                  },
+              },
+          },
+      },
+
+  # where the remote metadata is stored
+  'metadata': {
+      'local': [path.join(BASEDIR, 'remote_metadata.xml')],
+      },
+
+  # set to 1 to output debugging information
+  'debug': 1,
+
+  # certificate
+  'key_file': path.join(BASEDIR, 'shib.key'),  # private part
+  'cert_file': path.join(BASEDIR, 'shib.crt'),  # public part
+
+  # own metadata settings
+  'contact_person': [
+      {'given_name': 'Wilco',
+       'sur_name': 'Baan Hofman',
+       'company': 'Nikhef',
+       'email_address': 'wilcobh@nikhef.nl',
+       'contact_type': 'technical'},
+      ],
+  # you can set multilanguage information here
+  'organization': {
+      'name': [('Nikhef', 'en')],
+      'display_name': [('Nikhef', 'en')],
+      'url': [('http://www.nikhef.nl', 'en')],
+      },
+  'valid_for': 24,  # how long is our metadata valid
+  }

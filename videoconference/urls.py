@@ -12,4 +12,6 @@ urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
+    url(r'^saml2/', include('djangosaml2.urls')),
+
 )
